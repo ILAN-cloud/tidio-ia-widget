@@ -1,0 +1,121 @@
+
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo Widget Chat IA</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 2rem; }
+    h1 { margin-top: 0; }
+  </style>
+</head>
+<body>
+  <h1>Démo du Widget Chat IA</h1>
+  <p>Ce bouton ouvre un petit chat connecté à votre backend FastAPI.</p>
+
+  <!-- === Widget Chat IA (by Caroline) === -->
+  <div id="caro-ai-widget"></div>
+  <script>
+  (function(){
+    const CONFIG = {
+      api_base: "http://127.0.0.1:8000", // << remplace par ton backend déployé
+      client_id: "la-stella-12e",
+      welcome: "Bonjour 👋 Comment puis-je vous aider ?",
+    };
+
+    // Crée l'UI
+    const root = document.getElementById("caro-ai-widget");
+    root.style.position = "fixed";
+    root.style.right = "20px";
+    root.style.bottom = "20px";
+    root.style.zIndex = "999999";
+
+    root.innerHTML = `
+      <button id="caro-bubble" aria-label="Ouvrir le chat"
+        style="all:unset;cursor:pointer;background:#111;color:#fff;padding:12px 14px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.25);font-family:system-ui,Arial,Sans-serif">
+        💬 Discuter
+      </button>
+
+      <div id="caro-panel" role="dialog" aria-modal="true" aria-label="Chat IA"
+        style="display:none;position:fixed;right:20px;bottom:80px;width:360px;max-height:70vh;background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.25);overflow:hidden;font-family:system-ui,Arial,Sans-serif">
+        <div style="padding:12px 14px;border-bottom:1px solid #eee;font-weight:600">Assistant IA</div>
+        <div id="caro-chat" style="padding:12px;overflow:auto;height:360px;font-size:14px;line-height:1.45">
+          <div style="margin:8px 0;opacity:.8">${CONFIG.welcome}</div>
+        </div>
+        <div style="display:flex;gap:8px;padding:10px;border-top:1px solid #eee">
+          <input id="caro-input" type="text" autocomplete="off" placeholder="Écrivez votre message..."
+                style="flex:1;padding:10px;border:1px solid #ddd;border-radius:10px;outline:none"/>
+          <button id="caro-send" style="padding:10px 12px;border:0;border-radius:10px;background:#111;color:#fff;cursor:pointer">
+            Envoyer
+          </button>
+        </div>
+      </div>
+    `;
+
+    const bubble = document.getElementById("caro-bubble");
+    const panel  = document.getElementById("caro-panel");
+    const chat   = document.getElementById("caro-chat");
+    const input  = document.getElementById("caro-input");
+    const send   = document.getElementById("caro-send");
+
+    bubble.onclick = () => { panel.style.display = (panel.style.display === "none" ? "block" : "none"); input.focus(); };
+
+    send.onclick = async () => {
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = "";
+      appendUser(text);
+      setTyping(true);
+      const reply = await askAI(text);
+      setTyping(false);
+      appendBot(reply || "Désolé, je n’ai pas compris. Pouvez-vous reformuler ?");
+    };
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") send.click();
+    });
+
+    function escapeHtml(s){return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
+    function appendUser(t){ appendBubble(t, true); }
+    function appendBot(t){ appendBubble(t, false); }
+    function appendBubble(t, isUser){
+      const el = document.createElement("div");
+      el.style.margin = "8px 0";
+      el.style.textAlign = isUser ? "right" : "left";
+      const bg = isUser ? "#111;color:#fff" : "#f5f5f5;color:#111";
+      el.innerHTML = `<span style="display:inline-block;background:${bg.split(';')[0]};color:${bg.split(';')[1].split(':')[1]};padding:8px 10px;border-radius:12px;max-width:85%;word-wrap:break-word">${escapeHtml(t)}</span>`;
+      chat.appendChild(el); chat.scrollTop = chat.scrollHeight;
+    }
+    function setTyping(on){
+      const id = "caro-typing";
+      const old = document.getElementById(id);
+      if(on){
+        if(old) return;
+        const el = document.createElement("div");
+        el.id = id; el.style.margin = "8px 0";
+        el.innerHTML = `<span style="display:inline-block;background:#f5f5f5;padding:8px 10px;border-radius:12px">⋯</span>`;
+        chat.appendChild(el); chat.scrollTop = chat.scrollHeight;
+      }else if(old){ old.remove(); }
+    }
+
+    async function askAI(user_text){
+      try{
+        const res = await fetch(`${CONFIG.api_base}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            client_id: CONFIG.client_id,
+            message: user_text
+          })
+        });
+        const data = await res.json();
+        return data.reply;
+      }catch(e){
+        return null;
+      }
+    }
+  })();
+  </script>
+</body>
+</html>

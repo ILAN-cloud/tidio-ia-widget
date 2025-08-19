@@ -1,17 +1,25 @@
-# Tidio IA Widget
 
-Petit projet de démonstration : un backend **FastAPI** qui se connecte à l’API OpenAI, 
-et un widget de chat simple en **HTML/JS** à intégrer sur n’importe quel site.
+# Widget Chat IA + Backend (FastAPI)
 
-## 🚀 Fonctionnalités
-- API `/chat` pour discuter avec l’IA (modèle OpenAI `gpt-4o-mini`)
-- Prompts personnalisés par client (ex: pizzeria La Stella)
-- Widget de chat léger à coller dans un site web
-
-## 📦 Installation locale
+Installation rapide locale :
 ```bash
-git clone https://github.com/ILAN-cloud/tidio-ia-widget.git
-cd tidio-ia-widget
+python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-export OPENAI_API_KEY="sk-..."   # (Windows: set OPENAI_API_KEY=...)
+export OPENAI_API_KEY="sk-..."                      # Windows: set OPENAI_API_KEY=...
 uvicorn main:app --reload --port 8000
+```
+
+Test:
+```bash
+curl -X POST http://127.0.0.1:8000/chat       -H "Content-Type: application/json"       -d '{"client_id":"la-stella-12e","message":"Bonjour, vous ouvrez à quelle heure ?"}'
+```
+
+Déploiement (Render/Railway) :
+- Déploie ce repo comme service web Python
+- Commande de démarrage: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- Var d'env: `OPENAI_API_KEY`
+- Note l'URL publique: ex. https://api.ton-domaine.com
+
+Intégration front:
+- Ouvre `web/index.html` et colle le bloc sur le site client.
+- Change `api_base` et `client_id`.
